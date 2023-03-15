@@ -315,7 +315,27 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
     df = pd.DataFrame(rows, columns=['clothing_id','price', 'discount','clothing_type',\
                                      'size','gender','color','brand','description',\
                                      'image_url','aesthetic'])
-    print(df)               
+    print(df)
+ 
+def create_outfit():
+    """
+    Lets any user create an outfit using clothes from their own personal closet, 
+    the collaborative closet, and/or every store.
+    """
+    clothing_ids = list(map(int, input("Let's style an outfit! What are the clothing ID's of \
+                                       the pieces you would like it to consist of?\n").split()))
+    description = input('How would you describe this outfit? (250 characters or less)\n')
+    vibe = input('What is the "vibe" of this outfit? (i.e.: business casual, going out, etc.)\n')
+    for clothing_id in clothing_ids:
+        sql = 'INSERT INTO styled_outfits (clothing_id, outfit_desc, vibe) VALUES (' \
+              + clothing_id + ', ' + description + ', ' + vibe + ');'
+        cursor = conn.cursor()
+        cursor.execute(sql)
+    new_sql = 'SELECT * FROM styled_outfits'
+    cursor.execute(new_sql)
+    rows = cursor.fetchall()
+    df = pd.DataFrame(rows, columns=['outfit_id', 'clothing_id', 'outfit_des', 'vibe'])
+    print(df)
 
 # ----------------------------------------------------------------------
 # Command-Line Functionality
