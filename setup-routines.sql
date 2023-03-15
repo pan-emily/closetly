@@ -7,10 +7,13 @@ DROP TRIGGER IF EXISTS condition_update;
 -- Given a clothing item's discounted price and original discount, find
 -- the original price of the clothing item 
 DELIMITER !
-CREATE FUNCTION find_original_price (price NUMERIC(10,2), discount DECIMAL(4,1)) RETURNS NUMERIC(10,2)
+CREATE FUNCTION find_original_price (price NUMERIC(10,2), discount DECIMAL(4,1))
+RETURNS NUMERIC(10,2) DETERMINISTIC
 BEGIN
-    IF discount = 0 THEN RETURN price;
-    ELSE RETURN (price / discount);
+    IF discount = 0 THEN 
+        RETURN price;
+    ELSE 
+        RETURN (price / discount);
     END IF;
 END !
 DELIMITER ;
@@ -62,9 +65,10 @@ END !
 DELIMITER ;
 
 -- Function to check if a specific clothing item is available to borrow
--- from the collaborative closet and let the given user borrow it if it is.
+-- from the collaborative closet. If it is available and the potenital borrower
+-- is not the original owner of the item, then borrow it.
 DELIMITER !
-CREATE FUNCTION borrow_item (user_id INTEGER, clothing_id INTEGER)
+CREATE FUNCTION borrow_item (potential_borrower_id INTEGER, clothing_id INTEGER)
 RETURNS TINYINT DETERMINISTIC
 BEGIN
     DECLARE is_avail TINYINT;
@@ -72,19 +76,18 @@ BEGIN
     DECLARE item_owner INTEGER;
 
     SELECT user_id, is_available INTO item_owner, is_avail
-    FROM collab_closet 
-    WHERE collab_closet.clothing_id = clothing_id;
+    FROM collab_closet AS c
+    WHERE c.clothing_id = clothing_id;
 
-    IF is_avail = 1 AND item_owner != user_id
-    THEN
+    IF (is_avail = 1 AND item_owner <> potential_borrower_id) THEN
         UPDATE collab_closet
-            SET is_available = 0, current_borrower = user_id
+            SET is_available = 0, current_borrower = potential_borrower_id
             WHERE collab_closet.clothing_id = clothing_id;
         RETURN 1;
     ELSE
         RETURN 0;
     END IF;
-END
+END !
 DELIMITER ;
 
 
