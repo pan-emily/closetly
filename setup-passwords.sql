@@ -3,10 +3,10 @@
 -- Clean up old tables, functions, and procedures.
 DROP FUNCTION IF EXISTS make_salt;
 DROP TABLE IF EXISTS user_info;
-DROP PROCEDURE IF EXISTS sp_add_user;
 DROP PROCEDURE IF EXISTS add_to_user;
 DROP FUNCTION IF EXISTS authenticate;
 DROP PROCEDURE IF EXISTS sp_change_password;
+DROP PROCEDURE IF EXISTS sp_add_user;
 
 -- (Provided) This function generates a specified number of characters for using as a
 -- salt in passwords.
@@ -74,9 +74,6 @@ BEGIN
     -- prepend salt to password and generate SHA-2 hash 
     DECLARE generated_hash CHAR(64);
     SET generated_hash = SHA2(CONCAT(generated_salt, password), 256);
-
-    /* DECLARE db_user VARCHAR(20);
-    SET db_user = add_to_user(username); */
     
     -- Add a new record to the user_info table with the username, salt, and 
     -- salted password.
@@ -85,6 +82,7 @@ BEGIN
     
     -- Adds new user to the user table from our DDL so that they can
     -- add items to their own personal closet and/or the collaborative closet.
+    /* CALL add_to_user(username, username); */
 END !
 DELIMITER ;
 
@@ -132,9 +130,14 @@ DELIMITER ;
 -- [Problem 1c]
 -- Add at least two users into your user_info table so that when we run this file,
 -- we will have examples users in the database.
-CALL sp_add_user('Emily Pan', 'swimmerpenguin123');
-CALL sp_add_user('Bridget Yang', 'beyonce777');
-CALL sp_add_user('Ekta Patel', 'futurederma02');
+CALL sp_add_user('emilypan', 'swimmerpenguin123');
+CALL sp_add_user('bridgetyang', 'beyonce777');
+CALL sp_add_user('ektapatel', 'futurederma02');
+
+CALL add_to_user('Emily Pan', 'emilypan');
+CALL add_to_user('Bridget Yang', 'bridgetyang');
+CALL add_to_user('Ekta Patel', 'ektapatel');
+
 
 -- [Problem 1d]
 -- Optional: Create a procedure sp_change_password to generate a new salt and change the given

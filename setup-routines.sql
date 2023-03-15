@@ -1,3 +1,9 @@
+DROP FUNCTION IF EXISTS find_original_price;
+DROP FUNCTION IF EXISTS find_available;
+DROP PROCEDURE IF EXISTS sell_to_user;
+DROP FUNCTION IF EXISTS borrow_item;
+DROP TRIGGER IF EXISTS condition_update;
+
 -- Given a clothing item's discounted price and original discount, find
 -- the original price of the clothing item 
 DELIMITER !

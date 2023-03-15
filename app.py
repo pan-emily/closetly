@@ -12,7 +12,7 @@ import pandas as pd
 # to an actual client. Set to False when done testing.
 DEBUG = True # MAKE FALSE WHEN SUBMITTING  
 
-def get_conn():
+def get_conn(user, password):
     """"
     Returns a connected MySQL connector instance, if connection is successful.
     If unsuccessful, exits.
@@ -20,11 +20,11 @@ def get_conn():
     try:
         conn = mysql.connector.connect(
           host='localhost',
-          user='appadmin',
+          user=user,
           # Find port in MAMP or MySQL Workbench GUI or with
           # SHOW VARIABLES WHERE variable_name LIKE 'port';
           port='8889',
-          password='adminpw',
+          password=password,
           database='closetly'
         )
         if DEBUG:
@@ -55,7 +55,10 @@ def check_username(username):
     cursor.execute(sql, )
     # check if the given username exists in the username table
     # return true if it does exist and false if not
-    return bool(cursor.fetchone()[0])
+    a=cursor.fetchone()[0]
+    print(a)
+    return bool(a)
+    # return bool(cursor.fetchone()[0])
 
 def authenticate_login(username, password):
     sql = 'SELECT authenticate (%s, %s);'
@@ -65,20 +68,61 @@ def authenticate_login(username, password):
 
 def add_user(name, username, password):
     cursor = conn.cursor()
-    
     cursor.callproc('sp_add_user', args=(username, password))
     conn.commit()
     cursor.callproc('add_to_user', args=(name, username))
     conn.commit()
     return username
 
+def get_account_type():
+    # figure out what type of account the user is trying to get
+    print("Account types: ")
+    print("(a) Store Owner")
+    print("(b) Stylist")
+    print("(c) Personal Use")
+    ans = input("Enter account type: ")[0].lower()
+    if ans == 'a':
+        return 'storeowner'
+    if ans == 'b':
+        return 'stylist'
+    if ans == 'c':
+        return 'personal'
+    return 'appclient'
+
+def change_connection(account_type):
+    # changes connection based on permission level
+    conn.close()
+    if account_type == 'storeowner':
+        get_conn('storeowner', 'storeownerpw')
+    elif account_type == 'stylist':
+        get_conn('stylist', 'stylistpw')
+    elif account_type == 'personal':
+        get_conn('personal', 'personalpw')
+    elif account_type == 'admin':
+        get_conn('appadmin', 'adminpw')
+    else: 
+        # give general 'appclient' privileges
+        get_conn('appclient', 'clientpw')
+
+def get_permission(username):
+    sql = "select role from permissions where username="+username+';'
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    # check if the given username exists in the username table
+    # return true if it does exist and false if not
+    return cursor.fetchone()[0]
+
 def login():
+    # conn = get_conn('appadmin', 'adminpw')
     username = input("Enter username: ")
     valid_username = check_username(username)
+    print(valid_username)
     if valid_username == True:
         # initiate password authentication & continue 
         password = input("Enter password: ")
         if authenticate_login(username, password): # authenticated 
+            # change connection type 
+            conn = change_connection(get_permission(username))
             return username
         print("Incorrect login")
         quit_ui()
@@ -91,7 +135,11 @@ def login():
             if len(username) > 20:
                 username = input('Username is too long. Must be 20 characters or less.\n')
                 return login()
-    
+
+            # handle different account types
+            account_type = get_account_type()
+            conn = change_connection(account_type)
+
             new_password = input("What would you like your password to be?\n")
             while len(new_password) > 20:
                 new_password = input('Password is too long. Must be 20 characters or less:\n')
@@ -302,5 +350,5 @@ def main():
     show_options(username)
 
 if __name__ == '__main__':
-    conn = get_conn()
+    conn = get_conn('appadmin', 'adminpw')
     main()

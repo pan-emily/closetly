@@ -1,8 +1,8 @@
 CREATE USER 'appadmin'@'localhost' IDENTIFIED BY 'adminpw';
 CREATE USER 'appclient'@'localhost' IDENTIFIED BY 'clientpw';
-CREATE USER 'storeowner'@'localhost' IDENTIFIED BY 'storeowner';
-CREATE USER 'stylist'@'localhost' IDENTIFIED BY 'stylist';
-CREATE USER 'personal'@'localhost' IDENTIFIED BY 'personal';
+CREATE USER 'storeowner'@'localhost' IDENTIFIED BY 'storeownerpw';
+CREATE USER 'stylist'@'localhost' IDENTIFIED BY 'stylistpw';
+CREATE USER 'personal'@'localhost' IDENTIFIED BY 'personalpw';
 
 -- Can add more users or refine permissions
 GRANT ALL PRIVILEGES ON closetly.* TO 'appadmin'@'localhost';
