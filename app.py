@@ -212,23 +212,27 @@ def show_collaborative_clothes():
     """
     Shows a list of all the clothing in the collaborative closet.
     """
-    print('This is all the clothing items you can borrow from the colaborative closet:\n')
-    sql = """SELECT user_id, clothing_id, clothing_type, size, gender, color, brand,
-           description, image_url, aesthetic, curr_condition, is_available, curr_borrower
-           FROM collab_closet NATURAL JOIN clothes;"""
+    print('This is all the clothing items you can borrow from the colaborative \
+          closet:\n')
+    sql = """SELECT user_id, clothing_id, clothing_type, size, gender, color, \
+             brand, description, image_url, aesthetic, curr_condition, \
+             is_available, curr_borrower
+             FROM collab_closet NATURAL JOIN clothes;"""
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
-    df = pd.DataFrame(rows, columns=['user_id','clothing_id','clothing_type','size','gender',\
-                                     'color','brand','description','image_url','aesthetic',
-                                     'curr_condition','is_available','curr_borrower'])
+    df = pd.DataFrame(rows, columns=['user_id','clothing_id','clothing_type','size',\
+                                     'gender','color','brand','description','image_url',\
+                                     'aesthetic','curr_condition','is_available',\
+                                     'curr_borrower'])
     print(df)
 
 def show_user_in_collab(user_id):
     """
     Shows all the clothing a specific user is loaning in the collaborative closet.
     """
-    print('This is all the clothing items ' + user_id + ' has in the colaborative closet:\n')
+    print('This is all the clothing items ' + user_id + ' has in the colaborative \
+          closet:\n')
     sql = """SELECT clothing_id, clothing_type, size, gender, color, brand, description,
            image_url, aesthetic, curr_condition, is_available, curr_borrower
            FROM collab_closet NATURAL JOIN clothes 
@@ -316,7 +320,7 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
                                      'size','gender','color','brand','description',\
                                      'image_url','aesthetic'])
     print(df)
- 
+
 def create_outfit():
     """
     Lets any user create an outfit using clothes from their own personal closet, 
