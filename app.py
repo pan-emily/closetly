@@ -23,9 +23,9 @@ def get_conn(user, password):
           user=user,
           # Find port in MAMP or MySQL Workbench GUI or with
           # SHOW VARIABLES WHERE variable_name LIKE 'port';
-          port='8889',
+          port='3306',
           password=password,
-          database='closetly'
+          database='final'
         )
         if DEBUG:
             print('Successfully connected.')
@@ -52,7 +52,7 @@ def check_username(username):
     # access user_info to obtain the set of all usernames available
     sql = "SELECT COUNT(*) FROM (SELECT username FROM user_info WHERE username='" + username + "') as matches;"
     cursor = conn.cursor()
-    cursor.execute(sql, )
+    cursor.execute(sql)
     # check if the given username exists in the username table
     # return true if it does exist and false if not
     a=cursor.fetchone()[0]
@@ -93,36 +93,39 @@ def change_connection(account_type):
     # changes connection based on permission level
     conn.close()
     if account_type == 'storeowner':
-        get_conn('storeowner', 'storeownerpw')
+        return get_conn('storeowner', 'storeownerpw')
     elif account_type == 'stylist':
-        get_conn('stylist', 'stylistpw')
+        return get_conn('stylist', 'stylistpw')
     elif account_type == 'personal':
-        get_conn('personal', 'personalpw')
+        return get_conn('personal', 'personalpw')
     elif account_type == 'admin':
-        get_conn('appadmin', 'adminpw')
+        return get_conn('appadmin', 'adminpw')
     else: 
         # give general 'appclient' privileges
-        get_conn('appclient', 'clientpw')
+        return get_conn('appclient', 'clientpw')
 
 def get_permission(username):
-    sql = "select role from permissions where username="+username+';'
+    sql = "SELECT role FROM permissions WHERE username='"+username+"';"
     cursor = conn.cursor()
     cursor.execute(sql)
     # check if the given username exists in the username table
     # return true if it does exist and false if not
-    return cursor.fetchone()[0]
+    return cursor.fetchone()
 
 def login():
     # conn = get_conn('appadmin', 'adminpw')
     username = input("Enter username: ")
     valid_username = check_username(username)
     print(valid_username)
+    global conn
     if valid_username == True:
         # initiate password authentication & continue 
         password = input("Enter password: ")
         if authenticate_login(username, password): # authenticated 
             # change connection type 
-            conn = change_connection(get_permission(username))
+            perma = get_permission(username)
+            print(perma)
+            conn = change_connection(perma)
             return username
         print("Incorrect login")
         quit_ui()
@@ -164,8 +167,8 @@ def show_all_clothes():
     Shows a list of all the clothing in the database. Includes all clothes
     from every personal, collaborative, and store closet.
     """
-    print('This is all the clothing items in the personal, collaborative,\
-          and store closets:\n')
+    print('This is all the clothing items in the personal, collaborative, ' + \
+          'and store closets:\n')
     sql = 'SELECT * FROM clothes;'
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -212,8 +215,8 @@ def show_collaborative_clothes():
     """
     Shows a list of all the clothing in the collaborative closet.
     """
-    print('This is all the clothing items you can borrow from the colaborative \
-          closet:\n')
+    print('This is all the clothing items you can borrow from the colaborative' + \
+          'closet:\n')
     sql = """SELECT user_id, clothing_id, clothing_type, size, gender, color, \
              brand, description, image_url, aesthetic, curr_condition, \
              is_available, curr_borrower
@@ -231,8 +234,8 @@ def show_user_in_collab(user_id):
     """
     Shows all the clothing a specific user is loaning in the collaborative closet.
     """
-    print('This is all the clothing items ' + user_id + ' has in the colaborative \
-          closet:\n')
+    print('This is all the clothing items ' + user_id + ' has in the colaborative' + \
+          'closet:\n')
     sql = """SELECT clothing_id, clothing_type, size, gender, color, brand, description,
            image_url, aesthetic, curr_condition, is_available, curr_borrower
            FROM collab_closet NATURAL JOIN clothes 
@@ -306,8 +309,8 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
     Shows a list of all the clothing items being solid within a given discount
     range in a given store.
     """
-    print('This is all the clothing items currently being sold in the \
-           designated discount range at ' + store_name + ':\n')
+    print('This is all the clothing items currently being sold in the' + \
+           'designated discount range at ' + store_name + ':\n')
     sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
            description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
@@ -340,6 +343,7 @@ def create_outfit():
     rows = cursor.fetchall()
     df = pd.DataFrame(rows, columns=['outfit_id', 'clothing_id', 'outfit_des', 'vibe'])
     print(df)
+                   
 
 # ----------------------------------------------------------------------
 # Command-Line Functionality
@@ -347,7 +351,7 @@ def create_outfit():
 
 def show_options(username):
     print('Admin options: ')
-    print('    (a) show all clothes')
+    print('  (a) show all clothes')
     print('  (q) - quit')
 
     while True: 
@@ -369,10 +373,10 @@ def main():
     """
     Main function for starting things up.
     """
-
     username = login()
     show_options(username)
 
 if __name__ == '__main__':
     conn = get_conn('appadmin', 'adminpw')
     main()
+
