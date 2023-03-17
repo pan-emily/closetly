@@ -25,7 +25,7 @@ def get_conn(user, password):
           # SHOW VARIABLES WHERE variable_name LIKE 'port';
           port='3306',
           password=password,
-          database='final'
+          database='closetly'
         )
         if DEBUG:
             print('Successfully connected.')
