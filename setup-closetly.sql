@@ -44,7 +44,7 @@ CREATE TABLE personal_closet (
     user_id        INTEGER,
     -- Uniquely defines each piece of clothing in the database
     clothing_id    INTEGER,
-    clean          TINYINT DEFAULT 1, -- 1 means clean
+    is_clean          TINYINT DEFAULT 1, -- 1 means clean
     -- 0 means that the user does not want to share the item
     shared         TINYINT DEFAULT 0 NOT NULL,
     num_wears      INTEGER,
