@@ -15,7 +15,11 @@ DROP TABLE IF EXISTS user;
 CREATE TABLE user (
     -- Uniquely identifies database user 
     user_id           INTEGER AUTO_INCREMENT,
+    -- Can be a person's name (first and last) or store name:
     name              VARCHAR(80) NOT NULL,
+    -- A given username can have multiple accounts and thus
+    -- multiple user_id's. For example, a user can have an account
+    -- for their personal use and another account for their store.
     username          VARCHAR(20),
     PRIMARY KEY (user_id)
 );
@@ -44,7 +48,7 @@ CREATE TABLE personal_closet (
     user_id        INTEGER,
     -- Uniquely defines each piece of clothing in the database
     clothing_id    INTEGER,
-    is_clean          TINYINT DEFAULT 1, -- 1 means clean
+    is_clean       TINYINT DEFAULT 1, -- 1 means clean
     -- 0 means that the user does not want to share the item
     shared         TINYINT DEFAULT 0 NOT NULL,
     num_wears      INTEGER,
