@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS permissions;
 DROP PROCEDURE IF EXISTS user_add_permission;
 
 CREATE TABLE permissions (
-    username          VARCHAR(80),
+    username         VARCHAR(80),
     role             VARCHAR(30),
 
     PRIMARY KEY(username)
@@ -18,9 +18,12 @@ BEGIN
 END !
 DELIMITER ;
 
+-- clean up entries without usernames attached 
+DELETE FROM user 
+WHERE ISNULL(username);
+
 -- add permissions for current imported users
 -- all future users' permissions will be added upon account creation
-
-CALL user_add_permission('Emily Pan', 'appadmin');
-CALL user_add_permission('Bridget Yang', 'appadmin');
-CALL user_add_permission('Ekta Patel', 'personal');
+CALL user_add_permission('emilypan', 'appadmin');
+CALL user_add_permission('bridgetyang', 'appadmin');
+CALL user_add_permission('ektapatel', 'personal');
