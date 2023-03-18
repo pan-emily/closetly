@@ -258,9 +258,9 @@ def show_store_inventory(store_name):
     """
     Shows a list of all the clothing in the given store's inventory.
     """
-    print('This is all the clothing items currently being sold at' + store_name + ':\n')
+    print('This is all the clothing items currently being sold at ' + store_name + ':\n')
     sql = """SELECT clothing_id, price, discount, clothing_type, size, 
-           color, brand, description, image_url, aesthetic 
+           gender, color, brand, description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
            WHERE store_name = '""" + store_name + "';"
     cursor = conn.cursor()
@@ -276,10 +276,10 @@ def filter_store_by_price(store_name, min_price, max_price):
     Shows a list of all the clothing being sold in the provided price range
     in a given store.
     """
-    print('This is all the clothing items currently being sold at' + store_name + \
+    print('This is all the clothing items currently being sold at ' + store_name + \
           'for under $' + max_price + ':\n')
-    sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
-           description, image_url, aesthetic 
+    sql = """SELECT clothing_id, price, discount, clothing_type, size, gender, color, 
+           brand, description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
            WHERE store_name = '""" + store_name + "' AND price <= '" + max_price + \
            "' AND price >= '" + min_price + "' ORDER BY price;"
@@ -298,8 +298,8 @@ def filter_store_by_type(store_name, clothing_type):
     """
     print('This is all the clothing items of the type (' + clothing_type + \
           ') currently being sold at' + store_name + ':\n')
-    sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
-           description, image_url, aesthetic 
+    sql = """SELECT clothing_id, price, discount, clothing_type, size, gender, color, 
+           brand, description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
            WHERE clothing_type = '""" + clothing_type + "';"
     cursor = conn.cursor()
@@ -317,8 +317,8 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
     """
     print('This is all the clothing items currently being sold in the' + \
            'designated discount range at ' + store_name + ':\n')
-    sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
-           description, image_url, aesthetic 
+    sql = """SELECT clothing_id, price, discount, clothing_type, size, gender, color,
+           brand, description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
            WHERE discount >= '""" + min_discount + "' AND discount <= '" + max_discount \
             + "' ORDER BY discount;"
@@ -375,13 +375,15 @@ def change_sale(username, clothing_id, new_discount):
     # so must check that you're obtaining the price for the item from right store:
     get_price_discount = "SELECT price, discount FROM store_closet WHERE clothing_id = '" + \
                          clothing_id + "' AND store_name = '" + username + "';"
-    cursor = conn.cursor()
+    cursor = conn.cursor(buffered=True)
     cursor.execute(get_price_discount)
-    old_price = cursor.fetchone()
-    old_discount = cursor.fetchone()
-    get_orig_price = "CALL find_original_price('" + old_price + ", " + old_discount + "');"
-    cursor.execute(get_orig_price)
-    orig_price = cursor.fetchone()
+    row = cursor.fetchone()
+    old_price = row[0]
+    old_discount = row[1]
+    get_orig_price = "SELECT find_original_price(%s, %s);"
+    cursor = conn.cursor(buffered=True)
+    cursor.execute(get_orig_price, (old_price, old_discount))
+    orig_price = cursor.fetchone()[0]
     new_price = float(orig_price) * (float(new_discount) / 100)
     sql = "UPDATE store_closet SET price = '" + str(round(new_price, 2)) \
           + "', discount = '" + new_discount + "' WHERE clothing_id = '" + clothing_id \
@@ -468,7 +470,7 @@ def show_storeowner_options(username):
             # store owner's username is just the store name
             show_store_inventory(username)
             filter = input('Would you like to filter by price (p), clothing type'\
-                                 + '(t), or discount (d)?')
+                                 + ' (t), or discount (d)?')
             if filter == 'p':
                 min_price = input('Minimum price (in USD): $')
                 max_price = input('Maximum price (in USD): $')
@@ -484,7 +486,7 @@ def show_storeowner_options(username):
             clothing_id = input('Clothing ID: ')
             price = input('Price of item: $')
             discount = input('Discount (%): ')
-            sql = "INSERT INTO store_closet VALUES(" + username + ", " + str(clothing_id) \
+            sql = "INSERT INTO store_closet VALUES ('" + username + "', " + str(clothing_id) \
                   + ", " + str(price) + ", " + str(discount) + ");"
             cursor = conn.cursor(buffered=True)
             cursor.execute(sql)
@@ -503,7 +505,7 @@ def show_storeowner_options(username):
         elif action == 'e':
             clothing_id = input('Clothing ID of item: ')
             new_discount = input('Desired discount (%): ')
-            change_sale(username, clothing_id, discount)
+            change_sale(username, clothing_id, new_discount)
         else:
             quit_ui()
 
