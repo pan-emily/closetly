@@ -363,9 +363,9 @@ def change_sale(username, clothing_id, new_discount):
     get_orig_price = "CALL find_original_price('" + old_price + ", " + old_discount + "');"
     cursor.execute(get_orig_price)
     orig_price = cursor.fetchone()
-    new_price = orig_price * (new_discount / 100)
-    sql = "UPDATE store_closet SET price = '" + new_price + "', discount = " \
-          + new_discount + "WHERE clothing_id = '" + clothing_id \
+    new_price = float(orig_price) * (float(new_discount) / 100)
+    sql = "UPDATE store_closet SET price = '" + str(round(new_price, 2)) \
+          + "', discount = " + new_discount + "WHERE clothing_id = '" + clothing_id \
           + "AND store_name = '" + username + "';"
     cursor.execute(sql)
                    
