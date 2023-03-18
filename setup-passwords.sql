@@ -134,9 +134,9 @@ CALL sp_add_user('emilypan', 'swimmerpenguin123');
 CALL sp_add_user('bridgetyang', 'beyonce777');
 CALL sp_add_user('ektapatel', 'futurederma02');
 
-CALL add_to_user('Emily Pan', 'emilypan');
+/* CALL add_to_user('Emily Pan', 'emilypan');
 CALL add_to_user('Bridget Yang', 'bridgetyang');
-CALL add_to_user('Ekta Patel', 'ektapatel');
+CALL add_to_user('Ekta Patel', 'ektapatel'); */
 
 
 -- [Problem 1d]
