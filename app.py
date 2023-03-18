@@ -57,7 +57,6 @@ def check_username(username):
     # check if the given username exists in the username table
     # return true if it does exist and false if not
     a=cursor.fetchone()[0]
-    print(a)
     return bool(a)
     # return bool(cursor.fetchone()[0])
 
@@ -117,7 +116,6 @@ def login():
     # conn = get_conn('appadmin', 'adminpw')
     username = input("Enter username: ")
     valid_username = check_username(username)
-    print(valid_username)
     global conn
     if valid_username == True:
         # initiate password authentication & continue 
@@ -185,15 +183,15 @@ def show_personal_clothes(username):
     """
     print('This is all the clothing items in your personal closet:\n')
     sql = """SELECT clothing_id, clothing_type, size, gender, color, brand,
-           description, image_url, aesthetic, clean, shared, num_wears
+           description, image_url, aesthetic, is_clean, shared, num_wears
            FROM clothes NATURAL JOIN personal_closet NATURAL JOIN user
-           WHERE username = """ + username + ';'
+           WHERE username = '""" + username + "';"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
     df = pd.DataFrame(rows, columns=['clothing_id','clothing_type','size','gender',\
                                      'color','brand','description','image_url',\
-                                     'aesthetic','clean', 'shared', 'num_wears'])
+                                     'aesthetic','is_clean', 'shared', 'num_wears'])
     print(df)
 
 def borrow_from_collab_closet(user_id):
@@ -220,10 +218,10 @@ def show_collaborative_clothes():
     Shows a list of all the clothing in the collaborative closet.
     """
     print('This is all the clothing items you can borrow from the colaborative' + \
-          'closet:\n')
+          ' closet:\n')
     sql = """SELECT user_id, clothing_id, clothing_type, size, gender, color, \
              brand, description, image_url, aesthetic, curr_condition, \
-             is_available, curr_borrower
+             is_available, current_borrower
              FROM collab_closet NATURAL JOIN clothes;"""
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -231,7 +229,7 @@ def show_collaborative_clothes():
     df = pd.DataFrame(rows, columns=['user_id','clothing_id','clothing_type','size',\
                                      'gender','color','brand','description','image_url',\
                                      'aesthetic','curr_condition','is_available',\
-                                     'curr_borrower'])
+                                     'current_borrower'])
     print(df)
 
 def show_user_in_collab(user_id):
@@ -239,11 +237,11 @@ def show_user_in_collab(user_id):
     Shows all the clothing a specific user is loaning in the collaborative closet.
     """
     print('This is all the clothing items ' + user_id + ' has in the colaborative' + \
-          'closet:\n')
+          ' closet:\n')
     sql = """SELECT clothing_id, clothing_type, size, gender, color, brand, description,
-           image_url, aesthetic, curr_condition, is_available, curr_borrower
+           image_url, aesthetic, curr_condition, is_available, current_borrower
            FROM collab_closet NATURAL JOIN clothes 
-           WHERE user_id = """ + user_id + ';'
+           WHERE user_id = '""" + user_id + "';"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -260,7 +258,7 @@ def show_store_inventory(store_name):
     sql = """SELECT clothing_id, price, discount, clothing_type, size, 
            color, brand, description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
-           WHERE store_name = """ + store_name + ';'
+           WHERE store_name = '""" + store_name + "';"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -279,8 +277,8 @@ def filter_store_by_price(store_name, min_price, max_price):
     sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
            description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
-           WHERE store_name = """ + store_name + ' AND price <= ' + max_price + \
-           'AND price >=' + min_price + 'ORDER BY price;'
+           WHERE store_name = '""" + store_name + "' AND price <= '" + max_price + \
+           "' AND price >= '" + min_price + "' ORDER BY price;"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -299,7 +297,7 @@ def filter_store_by_type(store_name, clothing_type):
     sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
            description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
-           WHERE clothing_type = """ + clothing_type + ';'
+           WHERE clothing_type = '""" + clothing_type + "';"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -318,8 +316,8 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
     sql = """SELECT clothing_id, price, discount, clothing_type, size, color, brand, 
            description, image_url, aesthetic 
            FROM store_closet NATURAL JOIN clothes
-           WHERE discount >= """ + min_discount + 'AND discount <= ' + max_discount \
-            + 'ORDER BY discount;'
+           WHERE discount >= '""" + min_discount + "' AND discount <= '" + max_discount \
+            + "' ORDER BY discount;"
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -338,8 +336,8 @@ def create_outfit():
     description = input('How would you describe this outfit? (250 characters or less)\n')
     vibe = input('What is the "vibe" of this outfit? (i.e.: business casual, going out, etc.)\n')
     for clothing_id in clothing_ids:
-        sql = 'INSERT INTO styled_outfits (clothing_id, outfit_desc, vibe) VALUES (' \
-              + clothing_id + ', ' + description + ', ' + vibe + ');'
+        sql = "INSERT INTO styled_outfits (clothing_id, outfit_desc, vibe) VALUES ('" \
+              + str(clothing_id) + "', '" + description + "', '" + vibe + "');"
         cursor = conn.cursor()
         cursor.execute(sql)
     new_sql = 'SELECT * FROM styled_outfits'
@@ -355,7 +353,7 @@ def change_sale(username, clothing_id, new_discount):
     # Different stores could be selling the same clothing item for different prices,
     # so must check that you're obtaining the price for the item from right store:
     get_price_discount = "SELECT price, discount FROM store_closet WHERE clothing_id = '" + \
-                         clothing_id + "AND store_name = '" + username + "';"
+                         clothing_id + "' AND store_name = '" + username + "';"
     cursor = conn.cursor()
     cursor.execute(get_price_discount)
     old_price = cursor.fetchone()
@@ -365,8 +363,8 @@ def change_sale(username, clothing_id, new_discount):
     orig_price = cursor.fetchone()
     new_price = float(orig_price) * (float(new_discount) / 100)
     sql = "UPDATE store_closet SET price = '" + str(round(new_price, 2)) \
-          + "', discount = " + new_discount + "WHERE clothing_id = '" + clothing_id \
-          + "AND store_name = '" + username + "';"
+          + "', discount = '" + new_discount + "' WHERE clothing_id = '" + clothing_id \
+          + "' AND store_name = '" + username + "';"
     cursor.execute(sql)
                    
 
@@ -388,13 +386,19 @@ def show_options(username):
 
 def show_admin_options(username):
     print('Admin options: ')
-    print('  (a) show all clothes')
+    print('  (a) Personal options')
+    print('  (b) Store owner options')
+    print('  (c) Stylist options')
     print('  (q) - quit')
 
     while True: 
         action = input('Enter an option: ')[0].lower()
         if action == 'a':
-            show_all_clothes()
+            show_personal_clothes(username)
+        elif action == 'b':
+            show_storeowner_options(username)
+        elif action =='c':
+            show_stylist_options(username)
         else:
             quit_ui()
 
