@@ -83,11 +83,10 @@ def get_account_type():
     ans = input("Enter account type: ")[0].lower()
     if ans == 'a':
         return 'storeowner'
-    if ans == 'b':
+    elif ans == 'b':
         return 'stylist'
-    if ans == 'c':
+    else:
         return 'personal'
-    return 'appclient'
 
 def change_connection(account_type):
     # changes connection based on permission level
@@ -110,7 +109,7 @@ def get_permission(username):
     cursor.execute(sql)
     # check if the given username exists in the username table
     # return true if it does exist and false if not
-    return cursor.fetchone()
+    return cursor.fetchone()[0]
 
 def login():
     # conn = get_conn('appadmin', 'adminpw')
@@ -140,6 +139,11 @@ def login():
 
             # handle different account types
             account_type = get_account_type()
+            # add account type to user information
+            cursor = conn.cursor()
+            cursor.callproc('user_add_permission', args=(username, account_type))
+            conn.commit()
+            # change connection to the correct user 
             conn = change_connection(account_type)
 
             new_password = input("What would you like your password to be?\n")
@@ -326,18 +330,35 @@ def filter_store_by_discount(store_name, min_discount, max_discount):
                                      'image_url','aesthetic'])
     print(df)
 
+def check_outfit_id(id):
+    # access styled_outfits to obtain the set of all usernames available
+    sql = "SELECT COUNT(*) FROM (SELECT DISTINCT outfit_id FROM styled_outfits WHERE outfit_id='" \
+          + id + "') as matches;"
+    cursor = conn.cursor(buffered=True)
+    cursor.execute(sql)
+    # check if the given outfit id exists in the styled_outfits table
+    # return true if it does exist and false if not
+    a=cursor.fetchone()[0]
+    return bool(a)
+
 def create_outfit():
     """
     Lets any user create an outfit using clothes from their own personal closet, 
     the collaborative closet, and/or every store.
     """
-    clothing_ids = list(map(int, input("Let's style an outfit! What are the clothing ID's" +
-                                       "of the pieces you would like it to consist of?\n").split()))
+    clothing_ids = list(map(int, input("Let's style an outfit! What are the clothing ID's " +
+                                       "of the pieces you would like it to consist of? " +
+                                       "Separate them with spaces (e.g. 1 2 4)\n").split()))
+    while True:
+      outfit_id = input('Assign an outfit ID (integer) to this outfit: ')
+      if not check_outfit_id(outfit_id):
+          break
     description = input('How would you describe this outfit? (250 characters or less)\n')
     vibe = input('What is the "vibe" of this outfit? (i.e.: business casual, going out, etc.)\n')
     for clothing_id in clothing_ids:
-        sql = "INSERT INTO styled_outfits (clothing_id, outfit_desc, vibe) VALUES ('" \
-              + str(clothing_id) + "', '" + description + "', '" + vibe + "');"
+        sql = "INSERT INTO styled_outfits (outfit_id, clothing_id, outfit_desc, vibe) VALUES ('" \
+              + str(outfit_id) + "', '" + str(clothing_id) + "', '" + description + "', '" \
+              + vibe + "');"
         cursor = conn.cursor()
         cursor.execute(sql)
     new_sql = 'SELECT * FROM styled_outfits'
@@ -416,7 +437,7 @@ def show_personal_options(username):
             show_personal_clothes(username)
         elif action == 'b':
             show_collaborative_clothes()
-            user_id = input('Enter the user_id of a specific user whose available' + \
+            user_id = input('Enter the user_id of a specific user whose available ' + \
                              'clothes you would like to see: ')
             show_user_in_collab(user_id)
         elif action == 'c':
@@ -498,7 +519,7 @@ def show_stylist_options(username):
         if action == 'a':
             show_collaborative_clothes()
             user_id = input('Enter the user_id of a specific user whose available' + \
-                             'clothes you would like to see: ')
+                             ' clothes you would like to see: ')
             show_user_in_collab(user_id)
         elif action == 'b':
             store_name = input('Enter a store name: ')
@@ -552,4 +573,3 @@ def main():
 if __name__ == '__main__':
     conn = get_conn('appadmin', 'adminpw')
     main()
-
