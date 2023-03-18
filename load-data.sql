@@ -12,7 +12,7 @@ FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\r\n' IGNORE 1 ROW
 LOAD DATA LOCAL INFILE 'personal_closet.csv' INTO TABLE personal_closet
 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\r\n' 
 IGNORE 1 ROWS
-(user_id, clothing_id, clean, shared, num_wears) 
+(user_id, clothing_id, is_clean, shared, num_wears) 
 SET num_wears = NULLIF(num_wears, -1);
 
 -- Load all stores' (clothes.store_name != NULL) inventory data into the 
