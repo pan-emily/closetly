@@ -25,7 +25,7 @@ def get_conn(user, password):
           # SHOW VARIABLES WHERE variable_name LIKE 'port';
           port='3306',
           password=password,
-          database='closetly'
+          database='final'
         )
         if DEBUG:
             print('Successfully connected.')
@@ -51,7 +51,7 @@ def get_conn(user, password):
 def check_username(username):
     # access user_info to obtain the set of all usernames available
     sql = "SELECT COUNT(*) FROM (SELECT username FROM user_info WHERE username='" + username + "') as matches;"
-    cursor = conn.cursor()
+    cursor = conn.cursor(buffered=True)
     cursor.execute(sql)
     # check if the given username exists in the username table
     # return true if it does exist and false if not
@@ -102,7 +102,7 @@ def change_connection(account_type):
         return get_conn('appadmin', 'adminpw')
     else: 
         # give general 'appclient' privileges
-        return get_conn('appclient', 'clientpw')
+        return get_conn('personal', 'personalpw')
 
 def get_permission(username):
     sql = "SELECT role FROM permissions WHERE username='"+username+"';"
@@ -178,15 +178,15 @@ def show_all_clothes():
                                      'aesthetic','store_name'])
     print(df)
 
-def show_personal_clothes(user_id):
+def show_personal_clothes(username):
     """
     Shows a list of all the clothing in the user's personal closet.
     """
     print('This is all the clothing items in your personal closet:\n')
     sql = """SELECT clothing_id, clothing_type, size, gender, color, brand,
            description, image_url, aesthetic, clean, shared, num_wears
-           FROM clothes NATURAL JOIN personal_closet 
-           WHERE user_id = """ + user_id + ';'
+           FROM clothes NATURAL JOIN personal_closet NATURAL JOIN user
+           WHERE username = """ + username + ';'
     cursor = conn.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -201,12 +201,15 @@ def borrow_from_collab_closet(user_id):
     if they are not the original owner and it is not currently being 
     borrowed by someone else.
     """
-    clothing_id = input("What is the clothing ID of the item you \
-                        would like to borrow?\n")
-    sql = 'CALL borrow_item(' + user_id + ', ' + clothing_id + ');'
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    if bool(cursor.fetchone()[0]) == 1:
+    clothing_id = input("What is the clothing ID of the item you " + \
+                        "would like to borrow?\n")
+    sql = 'SELECT borrow_item(%s, %s);'
+    cursor = conn.cursor(buffered=True)
+    cursor.execute(sql, (user_id, clothing_id))
+    res = cursor.fetchone()[0]
+    print(res)
+    # if bool(cursor.fetchone()[0]) == 1:
+    if res == 1:
         print('Item successfully borrowed!')
     else:
         print('Sorry, you cannot borrow this item :(')
@@ -329,8 +332,8 @@ def create_outfit():
     Lets any user create an outfit using clothes from their own personal closet, 
     the collaborative closet, and/or every store.
     """
-    clothing_ids = list(map(int, input("Let's style an outfit! What are the clothing ID's of \
-                                       the pieces you would like it to consist of?\n").split()))
+    clothing_ids = list(map(int, input("Let's style an outfit! What are the clothing ID's" +
+                                       "of the pieces you would like it to consist of?\n").split()))
     description = input('How would you describe this outfit? (250 characters or less)\n')
     vibe = input('What is the "vibe" of this outfit? (i.e.: business casual, going out, etc.)\n')
     for clothing_id in clothing_ids:
@@ -343,13 +346,46 @@ def create_outfit():
     rows = cursor.fetchall()
     df = pd.DataFrame(rows, columns=['outfit_id', 'clothing_id', 'outfit_des', 'vibe'])
     print(df)
+
+def change_sale(username, clothing_id, new_discount):
+    """
+    Change the discount and thus price of a specific clothing item in the store inventory.
+    """
+    # Different stores could be selling the same clothing item for different prices,
+    # so must check that you're obtaining the price for the item from right store:
+    get_price_discount = "SELECT price, discount FROM store_closet WHERE clothing_id = '" + \
+                         clothing_id + "AND store_name = '" + username + "';"
+    cursor = conn.cursor()
+    cursor.execute(get_price_discount)
+    old_price = cursor.fetchone()
+    old_discount = cursor.fetchone()
+    get_orig_price = "CALL find_original_price('" + old_price + ", " + old_discount + "');"
+    cursor.execute(get_orig_price)
+    orig_price = cursor.fetchone()
+    new_price = orig_price * (new_discount / 100)
+    sql = "UPDATE store_closet SET price = '" + new_price + "', discount = " \
+          + new_discount + "WHERE clothing_id = '" + clothing_id \
+          + "AND store_name = '" + username + "';"
+    cursor.execute(sql)
                    
 
 # ----------------------------------------------------------------------
 # Command-Line Functionality
 # ----------------------------------------------------------------------
-
 def show_options(username):
+    permission = get_permission(username)
+    if permission == 'storeowner':
+        show_storeowner_options(username)
+    elif permission == 'stylist':
+        show_stylist_options(username)
+    elif permission == 'personal':
+        show_personal_options(username)
+    elif permission == 'admin':
+        show_admin_options(username)
+    else: 
+        show_personal_options(username)
+
+def show_admin_options(username):
     print('Admin options: ')
     print('  (a) show all clothes')
     print('  (q) - quit')
@@ -358,6 +394,138 @@ def show_options(username):
         action = input('Enter an option: ')[0].lower()
         if action == 'a':
             show_all_clothes()
+        else:
+            quit_ui()
+
+def show_personal_options(username):
+    print('Client options: ')
+    print('  (a) show personal clothes')
+    print('  (b) show collaborative clothes')
+    print('  (c) borrow from collaborative closet')
+    print('  (d) style an outfit')
+    print('  (q) quit')
+
+    while True: 
+        action = input('Enter an option: ')[0].lower()
+        if action == 'a':
+            show_personal_clothes(username)
+        elif action == 'b':
+            show_collaborative_clothes()
+            user_id = input('Enter the user_id of a specific user whose available' + \
+                             'clothes you would like to see: ')
+            show_user_in_collab(user_id)
+        elif action == 'c':
+            sql = "SELECT user_id FROM user WHERE username='" + username + "';"
+            cursor = conn.cursor(buffered=True)
+            cursor.execute(sql)
+            res = cursor.fetchone()[0]
+            user_id = int(res)
+            print(user_id)
+            borrow_from_collab_closet(user_id)
+        elif action == 'd':
+            create_outfit()
+        else:
+            quit_ui()
+
+def show_storeowner_options(username):
+    print('Store Owner options: ')
+    print('  (a) show inventory')
+    print('  (b) add item to inventory')
+    print('  (c) remove item from inventory')
+    print('  (s) sell clothing item to user')
+    print('  (e) change discount on item')
+    print('  (q) quit')
+
+    while True:
+        action = input('Enter an option: ')[0].lower()
+        if action == 'a':
+            # store owner's username is just the store name
+            show_store_inventory(username)
+            filter = input('Would you like to filter by price (p), clothing type'\
+                                 + '(t), or discount (d)?')
+            if filter == 'p':
+                min_price = input('Minimum price (in USD): $')
+                max_price = input('Maximum price (in USD): $')
+                filter_store_by_price(username, min_price, max_price)
+            elif filter == 't':
+                clothing_type = input('Clothing type: ')
+                filter_store_by_type(username, clothing_type)
+            elif filter == 'd':
+                min_discount = input('Minimum discount (%): ')
+                max_discount = input('Maximum disocunt (%): ')
+                filter_store_by_discount(username, min_discount, max_discount)
+        elif action == 'b':
+            clothing_id = input('Clothing ID: ')
+            price = input('Price of item: $')
+            discount = input('Discount (%): ')
+            sql = "INSERT INTO store_closet VALUES(" + username + ", " + str(clothing_id) \
+                  + ", " + str(price) + ", " + str(discount) + ");"
+            cursor = conn.cursor(buffered=True)
+            cursor.execute(sql)
+        elif action == 'c':
+            clothing_id = input('Clothing ID of item you would like to remove: ')
+            sql = "DELETE FROM store_closet WHERE clothing_id = '" + clothing_id +\
+                  "' AND store_name = '" + username +"';"
+            cursor = conn.cursor(buffered=True)
+            cursor.execute(sql)
+        elif action == 's':
+            clothing_id = input('Clothing ID of item being sold: ')
+            user_id = input('User ID of user the item is being sold to: ')
+            sql = 'CALL sell_to_user(%s, %s);'
+            cursor = conn.cursor(buffered=True)
+            cursor.execute(sql, (clothing_id, user_id))
+        elif action == 'e':
+            clothing_id = input('Clothing ID of item: ')
+            new_discount = input('Desired discount (%): ')
+            change_sale(username, clothing_id, discount)
+        else:
+            quit_ui()
+
+def show_stylist_options(username):
+    print('Stylist options: ')
+    print('  (a) show collaborative clothes')
+    print('  (b) show store inventories')
+    print('  (c) style an outfit for anyone')
+    print('  (q) quit')
+
+    while True: 
+        action = input('Enter an option: ')[0].lower()
+        if action == 'a':
+            show_collaborative_clothes()
+            user_id = input('Enter the user_id of a specific user whose available' + \
+                             'clothes you would like to see: ')
+            show_user_in_collab(user_id)
+        elif action == 'b':
+            store_name = input('Enter a store name: ')
+            show_store_inventory(store_name)
+            filter = input('Would you like to filter by price (p), clothing type'\
+                            + '(t), or discount (d)?')
+            if filter == 'p':
+                min_price = input('Minimum price (in USD): $')
+                max_price = input('Maximum price (in USD): $')
+                filter_store_by_price(store_name, min_price, max_price)
+            elif filter == 't':
+                clothing_type = input('Clothing type: ')
+                filter_store_by_type(store_name, clothing_type)
+            elif filter == 'd':
+                min_discount = input('Minimum discount (%): ')
+                max_discount = input('Maximum disocunt (%): ')
+                filter_store_by_discount(store_name, min_discount, max_discount)
+        elif action == 'c':
+            create_outfit()
+        else:
+            quit_ui()
+
+def show_client_options(username):
+    # restricted for users without a role 
+    print('Client options: ')
+    print('  (a) show collaborative clothes')
+    print('  (q) quit')
+
+    while True: 
+        action = input('Enter an option: ')[0].lower()
+        if action == 'a':
+            show_collaborative_clothes()
         else:
             quit_ui()
 
