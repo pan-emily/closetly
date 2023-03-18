@@ -50,7 +50,8 @@ def get_conn(user, password):
 # ----------------------------------------------------------------------
 def check_username(username):
     # access user_info to obtain the set of all usernames available
-    sql = "SELECT COUNT(*) FROM (SELECT username FROM user_info WHERE username='" + username + "') as matches;"
+    sql = "SELECT COUNT(*) FROM (SELECT username FROM user_info WHERE username='" \
+          + username + "') as matches;"
     cursor = conn.cursor(buffered=True)
     cursor.execute(sql)
     # check if the given username exists in the username table
