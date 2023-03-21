@@ -29,7 +29,7 @@ First, create an appropriate database in mySQL:
 Not including the "mysql>" prompt, run the following lines of code on your command-line
 after creating and using an appropriate database:
 
-``mysql> source setup-closetly.sql;``
+``mysql> source setup-closetly.sql;``<br>
 ``mysql> source load-data.sql;``
 ``mysql> source setup-passwords.sql;``
 ``mysql> source setup-routines.sql;``
