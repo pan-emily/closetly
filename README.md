@@ -1,49 +1,51 @@
-# closetly
-README -
+
+# Closetly
+## README -
 This is the final project for CS 121 Relational Databases at Caltech.
 The goal of the project was to create a database to allow personal users, 
 storeowners, and stylists to view their closets/stores, trade clothes
 with others, sell clothes, and style outfits. 
+
 The database supports a certain number of command-line queries as well as
 employee and customer logins. Follow the instructions below to try it out
 for yourself. Thank you!
 
-Contributors: Bridget Yang, Emily Pan
+#### Contributors: Bridget Yang, Emily Pan
 
-Data source: 
+#### Data source: 
 - Initial data was created by us, as well as some entries
   taken from lululemon.com and zara.com 
 
-Instructions for loading data on command-line:
+### Instructions for loading data on command-line:
 Make sure you have MySQL downloaded and available through your
 device's command-line.
 
 First, create an appropriate database in mySQL:
 
-mysql> CREATE DATABASE closetly;
-mysql> USE closetly;
+``mysql> CREATE DATABASE closetly;``
+``mysql> USE closetly;``
 
 
 Not including the "mysql>" prompt, run the following lines of code on your command-line
 after creating and using an appropriate database:
 
-mysql> source setup-closetly.sql;
-mysql> source load-data.sql;
-mysql> source setup-passwords.sql;
-mysql> source setup-routines.sql;
-mysql> source setup-permissions.sql;
-mysql> source grant-permissions.sql;
-mysql> source queries.sql;
+``mysql> source setup-closetly.sql;``
+``mysql> source load-data.sql;``
+``mysql> source setup-passwords.sql;``
+``mysql> source setup-routines.sql;``
+``mysql> source setup-permissions.sql;``
+``mysql> source grant-permissions.sql;``
+``mysql> source queries.sql;``
 
 Instructions for Python program:
-Please install the Python MySQL Connector using pip3 if not installed already.
+Please install the Python MySQL Connector using ``pip3`` if not installed already.
 
 After loading the data and verifying you are in the correct database, 
 run the following to open the python application:
 
-mysql> quit;
+``mysql> quit;``
 
-$ python3 app.py
+``$ python3 app.py``
 
 If you are new to the app, please follow the prompts to create a new
 user and let us know what type if user you are. We suggest that you
@@ -101,10 +103,10 @@ Here is a suggested guide to using Closetly as a stylist:
             prompted.
     4.  Select option [q] to quit the menu.
 
-Files written to user's system:
+#### Files written to user's system:
 - No files are written to the user's system.
 
-Unfinished features:
+#### Unfinished features:
 - As a store owner, we created functionality to find the original price of an
   item before it was discounted in the case that you would like to revert a
   sale or a promotion ends. This is the only function that we know of that does
